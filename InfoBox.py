@@ -115,7 +115,6 @@ def drawInfoBox(info, allEntities):
 					if foundFT:
 						temp.append('From/To')
 					table.append(temp)
-					print temp
 
 					for item in value:
 						temp2 = []
@@ -133,7 +132,6 @@ def drawInfoBox(info, allEntities):
 							else:
 								temp2.append(' ')
 						table.append(temp2)
-					print table
 					x = tabulate(table, tablefmt="grid", headers = "firstrow")
 					if wrapper.width < len(x.split('\n')[0].encode('utf8')) + 27:
 						wrapper.width = len(x.split('\n')[0].encode('utf8')) + 27
