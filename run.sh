@@ -1,12 +1,13 @@
 #!/bin/bash
 
-if [ "$#" -ne 2 ] && [ "$#" -ne 5 ]; then
+if [ "$#" -ne 2 ] && [ "$#" -ne 6 ]; then
     echo "Illegal number of parameters"
 fi
 
-if [ "$5" == "infobox" ]; then
-	python InfoBox.py $2 $3 "'$4'"
-else if [ "$5" == "question" ]; then
-	#call script for Part 2 here
+if [ "$#" -eq 6 ]; then
+	python InfoBox.py "-$1" $2 $3 "'$4'" $5 $6
+else if [ "$#" -eq 2 ]; then
+		python InfoBox.py "-$1" $2
+	fi
 fi
 

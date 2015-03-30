@@ -2,6 +2,7 @@ import json
 import pprint
 import urllib
 import io
+import re
 import sys
 import time
 import datetime
@@ -9,28 +10,10 @@ import getpass
 from tabulate import tabulate
 import textwrap
 from textwrap import TextWrapper
+import getopt
+import helper
 
 priorityWords = ['Organization', 'Name', 'Character']
-# def drawList(listData):
-# 	for item in listData:
-# 		if type(item)==dict:
-# 			drawDict(item)
-# 		elif type(item)==list:
-# 			drawList(item)
-# 		else:
-# 			print '{0:10} {1:10}'.format('', item)
-
-# def drawDict(dictData):
-# 	tab = '\t\t'
-# 	for key, value in dictData.iteritems():
-
-# 		if type(value)==list:
-# 			drawList(value)
-# 		elif type(value)==dict:
-# 			drawDict(value)
-# 		else:
-# 			print '{0:13} {1:13}'.format(key+':', value)
-	# print
 
 def getPrintValue(value):
 	if isinstance(value,basestring):
@@ -61,6 +44,7 @@ def drawInfoBox(info, allEntities):
 	print
 	for key, value in info.iteritems():
 		valuePrint = getPrintValue(value)
+		valuePrint = valuePrint.decode('utf-8')
 		columnString = '{0:25}:  '.format(key)
 		if type(value)==unicode:
 			print wrapper.fill(columnString+valuePrint)
@@ -68,6 +52,7 @@ def drawInfoBox(info, allEntities):
 
 	for key, value in info.iteritems():
 		valuePrint = getPrintValue(value)
+		valuePrint = valuePrint.decode('utf-8')
 		columnString = '{0:25}:  '.format(key)
 		if type(value)==list:
 			if all(isinstance(x,unicode) for x in value):
@@ -80,6 +65,7 @@ def drawInfoBox(info, allEntities):
 
 	for key, value in info.iteritems():
 		valuePrint = getPrintValue(value)
+		valuePrint = valuePrint.decode('utf-8')
 		columnString = '{0:25}:  '.format(key)
 		if type(value)==list:
 			if all(isinstance(x,dict) for x in value):
@@ -107,6 +93,7 @@ def drawInfoBox(info, allEntities):
 	
 	for key, value in info.iteritems():
 		valuePrint = getPrintValue(value)
+		valuePrint = valuePrint.decode('utf-8')
 		columnString = '{0:25}:  '.format(key)
 		if type(value)==list:
 			if all(isinstance(x,dict) for x in value):
@@ -114,7 +101,7 @@ def drawInfoBox(info, allEntities):
 				temp = []
 				if key!='Spouses':			
 					for item in value:
-						b = [getPrintValue(i).strip() for i in item.keys()]
+						b = [getPrintValue(i).strip().decode('utf-8') for i in item.keys()]
 						temp = list(set(temp) | set(b))
 					foundFT = False
 					for word in priorityWords:
@@ -128,21 +115,25 @@ def drawInfoBox(info, allEntities):
 					if foundFT:
 						temp.append('From/To')
 					table.append(temp)
+					print temp
 
 					for item in value:
 						temp2 = []
 						for key2 in temp:
 							if key2 in item.keys():
 								valuePrint = getPrintValue(item[key2])
+								valuePrint = valuePrint.decode('utf-8')
 								temp2.append(valuePrint)
 							elif key2=='From/To':
 								value1 = getPrintValue(item['From'])
 								value2 = getPrintValue(item['To'])
 								valuePrint = value1 + ' / ' + value2
+								valuePrint = valuePrint.decode('utf-8')
 								temp2.append(valuePrint)
 							else:
 								temp2.append(' ')
 						table.append(temp2)
+					print table
 					x = tabulate(table, tablefmt="grid", headers = "firstrow")
 					if wrapper.width < len(x.split('\n')[0].encode('utf8')) + 27:
 						wrapper.width = len(x.split('\n')[0].encode('utf8')) + 27
@@ -158,11 +149,11 @@ def drawInfoBox(info, allEntities):
 					print wrapper.fill('-'*(wrapper.width-2))
 	print
 
-def doStuff(query, api_key):
+def doStuff(query, apiKey):
 	service_url = 'https://www.googleapis.com/freebase/v1/search'
 	params = {
-	        'query': query,
-	        'key': api_key
+			'query': query,
+			'key': apiKey
 	}
 	url = service_url + '?' + urllib.urlencode(params)
 	response = json.loads(urllib.urlopen(url).read())
@@ -173,7 +164,7 @@ def doStuff(query, api_key):
 		thisMid = result['mid']
 		topic_url = 'https://www.googleapis.com/freebase/v1/topic' + thisMid
 		params = {
-	        	'key': api_key
+				'key': apiKey
 		}
 		url2 = topic_url + '?' + urllib.urlencode(params)
 		response2 = json.loads(urllib.urlopen(url2).read())
@@ -560,12 +551,16 @@ def getInfo(entityFound, response, result, info):
 
 def usage():
 	print """ Usage:
-	python InfoBox.py [API_Key] -q [query] 
-	python InfoBox.py [API_Key] -f [file of queries]
-	python InfoBox.py [API_Key]
+	python InfoBox.py [apiKey] -q [query] 
+	python InfoBox.py [apiKey] -f [file of queries]
+	python InfoBox.py [apiKey]
 
 	"""
-def interactiveInfoBox(api_key):
+
+def printHelp():
+    print "HELP!"
+
+def interactiveInfoBox(apiKey):
 	print 'Welcome to infoxbox creator using Freebase knowledge graph.'
 	print 'Feel curious? Start exploring...'
 	print
@@ -575,28 +570,70 @@ def interactiveInfoBox(api_key):
 		st = datetime.datetime.fromtimestamp(ts).strftime('%H:%M:%S')
 		print '['+st+']',
 		query = raw_input(getpass.getuser()+'@fb_ibox> ')
-		doStuff(query, api_key)
+
+		pattern = 'Who created ([\w\s.-]+)\?*'
+		match = re.search(pattern, query, re.IGNORECASE)
+		if match:
+			query = match.group(1)
+			helper.answerQuestion(query, apiKey)
+		else:
+			doStuff(query, apiKey)
 
 if __name__ == "__main__":
 
-	if len(sys.argv)!=2 and len(sys.argv)!=4: # Expect exactly one argument: the api_key
+	if len(sys.argv)!=3 and len(sys.argv)!=7: # Expect exactly one argument: the apiKey
 		usage()
 		sys.exit(2)	
 	else:
-		api_key =  sys.argv[1].strip('\'')
-		if len(sys.argv)==2:
-			interactiveInfoBox(api_key)
-		elif sys.argv[2]=='-q':
-			query = sys.argv[3].strip('\'')
-			doStuff(query, api_key)
-		elif sys.argv[2]=='-f':
-			f = open(sys.argv[3].strip('\''))
+		try:
+			opts, arguments = getopt.getopt(sys.argv[1:],"f:hq:t:",["key="])
+		except getopt.GetoptError:
+			printHelp()
+			sys.exit(2)
+		for opt, arg in opts:
+			if opt == '-h':
+				printHelp()
+				sys.exit()
+			elif opt == '-f':
+				queryFile = arg.strip('\'')
+			elif opt == '-q':
+				query = arg
+			elif opt == '-t':
+				task = arg
+			elif opt == "--key":
+				apiKey = arg
+
+		if len(sys.argv)==3:
+			interactiveInfoBox(apiKey)
+
+		elif sys.argv[3]=='-q':
+			if task=='infobox':
+				doStuff(query, apiKey)
+			else:
+				print 'Question: ' + query
+				pattern = 'Who created ([\w\s.-]+)\?*'
+				match = re.search(pattern, query, re.IGNORECASE)
+				if match:
+					query = match.group(1)
+					helper.answerQuestion(query, apiKey)
+
+		elif sys.argv[3]=='-f':
+			f = open(queryFile)
 			while f:
 				query = f.readline()
 				if query:
-					doStuff(query, api_key)
+					if task=='infobox':
+						doStuff(query, apiKey)
+					else:
+						print 'Question: ' + query
+						pattern = 'Who created ([\w\s.-]+)\?*'
+						match = re.search(pattern, query, re.IGNORECASE)
+						if match:
+							query = match.group(1)
+							helper.answerQuestion(query, apiKey)
 				else:
 					sys.exit(2)
+
 
 			
 
