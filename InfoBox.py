@@ -6,57 +6,157 @@ import sys
 import time
 import datetime
 import getpass
+from tabulate import tabulate
+import textwrap
+from textwrap import TextWrapper
 
+priorityWords = ['Organization', 'Name', 'Character']
+# def drawList(listData):
+# 	for item in listData:
+# 		if type(item)==dict:
+# 			drawDict(item)
+# 		elif type(item)==list:
+# 			drawList(item)
+# 		else:
+# 			print '{0:10} {1:10}'.format('', item)
 
-def html_table(lol):
-	print '<table>'
-	for sublist in lol:
-		print '  <tr><td>'
-		print '    </td><td>'.join(sublist)
-		print '  </td></tr>'
-		print '</table>'
+# def drawDict(dictData):
+# 	tab = '\t\t'
+# 	for key, value in dictData.iteritems():
 
-def drawList(listData):
-	for item in listData:
-		if type(item)==dict:
-			drawDict(item)
-		elif type(item)==list:
-			drawList(item)
-		else:
-			print '{0:10} {1:10}'.format('', item)
+# 		if type(value)==list:
+# 			drawList(value)
+# 		elif type(value)==dict:
+# 			drawDict(value)
+# 		else:
+# 			print '{0:13} {1:13}'.format(key+':', value)
+	# print
 
-def drawDict(dictData):
-	tab = '\t\t'
-	for key, value in dictData.iteritems():
-
-		if type(value)==list:
-			drawList(value)
-		elif type(value)==dict:
-			drawDict(value)
-		else:
-			print '{0:13} {1:13}'.format(key+':', value)
-	print
+def getPrintValue(value):
+	if isinstance(value,basestring):
+		valuePrint = value.encode('utf8')
+	else:
+		valuePrint = unicode(value).encode('utf8')
+	return valuePrint
 
 def drawInfoBox(info, allEntities):
-	pprint.pprint(info)
-	for key, value in info.iteritems():
-		if isinstance(value,basestring):
-		    printThis = value.encode('utf8')
+	print
+	print
+	introString = info['Name']+' ('
+	first = True
+	for entity in allEntities:
+		if first:
+			introString = introString + entity
+			first = False
 		else:
-		    printThis = unicode(value).encode('utf8')
+			introString = introString + ', '+entity
+	introString = introString + ')'
+	wrapper = TextWrapper()
+	wrapper.initial_indent = ' '*2
+	wrapper.subsequent_indent = ' '*30
+	wrapper.dedent = True
+	wrapper.width = 150
+	print wrapper.fill(introString)
+	print wrapper.fill('-'*(len(introString)))
+	print
+	for key, value in info.iteritems():
+		valuePrint = getPrintValue(value)
+		columnString = '{0:25}:  '.format(key)
+		if type(value)==unicode:
+			print wrapper.fill(columnString+valuePrint)
+			print wrapper.fill('-'*(wrapper.width-2))
 
-		print '|{0:25}\t{1:80}|\n'.format(key+':', printThis),
-		print '-'*170
-        
+	for key, value in info.iteritems():
+		valuePrint = getPrintValue(value)
+		columnString = '{0:25}:  '.format(key)
+		if type(value)==list:
+			if all(isinstance(x,unicode) for x in value):
+				firstVal = value[0]
+				print wrapper.fill(columnString+firstVal)
+				wrapper.initial_indent = ' '*30
+				print wrapper.fill('\n'.join(value[1:]))
+				wrapper.initial_indent = ' '*2
+				print wrapper.fill('-'*(wrapper.width-2))
 
-	# 	if type(value)==list:
-	# 		print '{0:10}'.format(key + ': '),
-	# 		drawList(value)
-	# 	elif type(value)==dict:
-	# 		print '{0:10}'.format(key + ': ')
-	# 		drawDict(value)
-	# 	else:
-	# 		print '{0:10}: {1:10}'.format(key, value)
+	for key, value in info.iteritems():
+		valuePrint = getPrintValue(value)
+		columnString = '{0:25}:  '.format(key)
+		if type(value)==list:
+			if all(isinstance(x,dict) for x in value):
+				table = []
+				temp = []
+
+				if key=='Spouses':
+					if value:
+						first = True
+						for item in value:
+							if first:
+								if item['Location']!=' ':
+									print wrapper.fill(columnString+item['Name']+' (' + item['From'] + ' - '+item['To'] + ') @ ' + item['Location'])
+								else:
+									print wrapper.fill(columnString+item['Name']+' (' + item['From'] + ' - '+item['To'] + ')')
+								first = False
+							else:
+								wrapper.initial_indent = ' '*30
+								if item['Location']!=' ':
+									print wrapper.fill(item['Name']+' (' + item['From'] + ' - '+item['To'] + ') @ ' + item['Location'])
+								else:
+									print wrapper.fill(item['Name']+' (' + item['From'] + ' - '+item['To'] + ')')
+								wrapper.initial_indent = ' '*2
+					print wrapper.fill('-'*(wrapper.width-2))
+	
+	for key, value in info.iteritems():
+		valuePrint = getPrintValue(value)
+		columnString = '{0:25}:  '.format(key)
+		if type(value)==list:
+			if all(isinstance(x,dict) for x in value):
+				table = []
+				temp = []
+				if key!='Spouses':			
+					for item in value:
+						b = [getPrintValue(i).strip() for i in item.keys()]
+						temp = list(set(temp) | set(b))
+					foundFT = False
+					for word in priorityWords:
+						if word in temp:
+							temp.remove(word)
+							temp.insert(0, word)
+					if 'From' in temp:
+						temp.remove('From')
+						temp.remove('To')
+						foundFT = True
+					if foundFT:
+						temp.append('From/To')
+					table.append(temp)
+
+					for item in value:
+						temp2 = []
+						for key2 in temp:
+							if key2 in item.keys():
+								valuePrint = getPrintValue(item[key2])
+								temp2.append(valuePrint)
+							elif key2=='From/To':
+								value1 = getPrintValue(item['From'])
+								value2 = getPrintValue(item['To'])
+								valuePrint = value1 + ' / ' + value2
+								temp2.append(valuePrint)
+							else:
+								temp2.append(' ')
+						table.append(temp2)
+					x = tabulate(table, tablefmt="grid", headers = "firstrow")
+					if wrapper.width < len(x.split('\n')[0].encode('utf8')) + 27:
+						wrapper.width = len(x.split('\n')[0].encode('utf8')) + 27
+					first = True
+					for row in x.split('\n'):
+						if first:
+							print wrapper.fill(columnString+row)
+							first = False
+						else:
+							wrapper.initial_indent = ' '*30
+							print wrapper.fill(row)
+							wrapper.initial_indent = ' '*2
+					print wrapper.fill('-'*(wrapper.width-2))
+	print
 
 def doStuff(query, api_key):
 	service_url = 'https://www.googleapis.com/freebase/v1/search'
@@ -66,7 +166,6 @@ def doStuff(query, api_key):
 	}
 	url = service_url + '?' + urllib.urlencode(params)
 	response = json.loads(urllib.urlopen(url).read())
-	# pprint.pprint(response)
 	foundSomething = False
 	countMid = 0
 	for result in response['result']:
@@ -80,11 +179,9 @@ def doStuff(query, api_key):
 		response2 = json.loads(urllib.urlopen(url2).read())
 		allEntities = getEntities(response2)
 		info = {}
-
 		if allEntities:
 			for entityFound in allEntities:
 				getInfo(entityFound, response2, result, info)
-
 		if info:
 			foundSomething = True
 			break
@@ -94,15 +191,12 @@ def doStuff(query, api_key):
 				if countMid==20:
 					print 'No related information about query ['+query+'] was found!'
 					break
-	
 	if foundSomething:
 		drawInfoBox(info, allEntities)
-	
 
 def getEntities(response):
 	allProperites = response['property']
 	allEntities = []
-
 	for key in allProperites.keys():
 		thisKey = str(key)
 		if thisKey.startswith('/people/person'):
@@ -117,7 +211,7 @@ def getEntities(response):
 			allEntities.append('League')
 		if thisKey.startswith('/sports/sports_team') or thisKey.startswith('/sports/professional_sports_team'):
 			allEntities.append('SportsTeam')		
-	return allEntities
+	return list(set(allEntities))
 
 def getDOB(propertyJson):
 	return propertyJson['values'][0]['text']
@@ -150,6 +244,7 @@ def getSiblings(propertyJson):
 
 def getSpouses(propertyJson):
 	allSpouses = []
+	neededArgs = ['Name', 'From', 'To', 'Location']
 	for item in propertyJson['values']:
 		temp = {}
 		if '/people/marriage/spouse' in item['property'].keys():
@@ -161,11 +256,14 @@ def getSpouses(propertyJson):
 		if '/people/marriage/to' in item['property'].keys():
 			if item['property']['/people/marriage/to']['values']:
 				temp['To'] = item['property']['/people/marriage/to']['values'][0]['text']
-		if 'from' in temp.keys() and 'to' not in temp.keys():
-			temp['to'] = 'now'
+		if 'From' in temp.keys() and 'To' not in temp.keys():
+			temp['To'] = 'now'
 		if '/people/marriage/location_of_ceremony' in item['property'].keys():
 			if item['property']['/people/marriage/location_of_ceremony']['values']:
 				temp['Location'] = item['property']['/people/marriage/location_of_ceremony']['values'][0]['text']
+		for arg in neededArgs:
+			if arg not in temp.keys():
+				temp[arg] = ' '
 		allSpouses.append(temp)
 	return allSpouses
 
@@ -189,6 +287,7 @@ def getInfluenced(propertyJson):
 
 def getFilms(propertyJson):
 	allFilms = []
+	neededArgs = ['Character', 'Film']
 	for item in propertyJson['values']:
 		temp = {}
 		if '/film/performance/character' in item['property'].keys():
@@ -197,6 +296,9 @@ def getFilms(propertyJson):
 		if '/film/performance/film' in item['property'].keys():
 			if item['property']['/film/performance/film']['values']:
 				temp['Film'] = item['property']['/film/performance/film']['values'][0]['text']
+		for arg in neededArgs:
+			if arg not in temp.keys():
+				temp[arg] = ' '
 		allFilms.append(temp)
 	return allFilms
 
@@ -211,6 +313,7 @@ def getLeagues(propertyJson):
 
 def getTVSeries(propertyJson):
 	allTVSeries = []
+	neededArgs = ['Character', 'TV Series']
 	for item in propertyJson['values']:
 		temp = {}
 		if '/tv/regular_tv_appearance/character' in item['property'].keys():
@@ -219,34 +322,41 @@ def getTVSeries(propertyJson):
 		if '/tv/regular_tv_appearance/series' in item['property'].keys():
 			if item['property']['/tv/regular_tv_appearance/series']['values']:
 				temp['TV Series'] = item['property']['/tv/regular_tv_appearance/series']['values'][0]['text']
+		for arg in neededArgs:
+			if arg not in temp.keys():
+				temp[arg] = ' '
 		allTVSeries.append(temp)
 	return allTVSeries
 
 def getBoardMember(propertyJson):
 	allBoardMember = []
+	neededArgs = ['Organization', 'Role', 'Title', 'From', 'To']
 	for item in propertyJson['values']:
 		temp = {}
 		if '/organization/organization_board_membership/organization' in item['property'].keys():
 			if item['property']['/organization/organization_board_membership/organization']['values']:
-				temp['organization'] = item['property']['/organization/organization_board_membership/organization']['values'][0]['text']
+				temp['Organization'] = item['property']['/organization/organization_board_membership/organization']['values'][0]['text']
 		
 		if '/organization/organization_board_membership/role' in item['property'].keys():
 			if item['property']['/organization/organization_board_membership/role']['values']:
-				temp['role'] = item['property']['/organization/organization_board_membership/role']['values'][0]['text']
+				temp['Role'] = item['property']['/organization/organization_board_membership/role']['values'][0]['text']
 
 		if '/organization/organization_board_membership/title' in item['property'].keys():
 			if item['property']['/organization/organization_board_membership/title']['values']:
-				temp['title'] = item['property']['/organization/organization_board_membership/title']['values'][0]['text']
+				temp['Title'] = item['property']['/organization/organization_board_membership/title']['values'][0]['text']
 
 		if '/organization/organization_board_membership/from' in item['property'].keys():
 			if item['property']['/organization/organization_board_membership/from']['values']:
-				temp['from'] = item['property']['/organization/organization_board_membership/from']['values'][0]['text']
+				temp['From'] = item['property']['/organization/organization_board_membership/from']['values'][0]['text']
 
 		if '/organization/organization_board_membership/to' in item['property'].keys():
 			if item['property']['/organization/organization_board_membership/to']['values']:
-				temp['to'] = item['property']['/organization/organization_board_membership/to']['values'][0]['text']
-		if 'from' in temp.keys() and 'to' not in temp.keys():
-			temp['to'] = 'now'
+				temp['To'] = item['property']['/organization/organization_board_membership/to']['values'][0]['text']
+		if 'From' in temp.keys() and 'To' not in temp.keys():
+			temp['To'] = 'now'
+		for arg in neededArgs:
+			if arg not in temp.keys():
+				temp[arg] = ' '
 		allBoardMember.append(temp)
 	return allBoardMember
 
@@ -264,84 +374,95 @@ def getLocation(propertyJson):
 
 def getLeadership(propertyJson):
 	allLeadership = []
+	neededArgs = ['Organization', 'Role', 'Title', 'From', 'To']
 	for item in propertyJson['values']:
 		temp = {}
 		if '/organization/leadership/organization' in item['property'].keys():
 			if item['property']['/organization/leadership/organization']['values']:
-				temp['organization'] = item['property']['/organization/leadership/organization']['values'][0]['text']
+				temp['Organization'] = item['property']['/organization/leadership/organization']['values'][0]['text']
 
 		if '/organization/leadership/role' in item['property'].keys():
 			if item['property']['/organization/leadership/role']['values']:
-				temp['role'] = item['property']['/organization/leadership/role']['values'][0]['text']
+				temp['Role'] = item['property']['/organization/leadership/role']['values'][0]['text']
 
 		if '/organization/leadership/title' in item['property'].keys():
 			if item['property']['/organization/leadership/title']['values']:
-				temp['title'] = item['property']['/organization/leadership/title']['values'][0]['text']	
+				temp['Title'] = item['property']['/organization/leadership/title']['values'][0]['text']	
 
 		if '/organization/leadership/from' in item['property'].keys():
 			if item['property']['/organization/leadership/from']['values']:
-				temp['from'] = item['property']['/organization/leadership/from']['values'][0]['text']		
+				temp['From'] = item['property']['/organization/leadership/from']['values'][0]['text']		
 
 		if '/organization/leadership/to' in item['property'].keys():
 			if item['property']['/organization/leadership/to']['values']:
-				temp['to'] = item['property']['/organization/leadership/to']['values'][0]['text']
-		if 'from' in temp.keys() and 'to' not in temp.keys():
-			temp['to'] = 'now'
+				temp['To'] = item['property']['/organization/leadership/to']['values'][0]['text']
+		if 'From' in temp.keys() and 'To' not in temp.keys():
+			temp['To'] = 'now'
+		for arg in neededArgs:
+			if arg not in temp.keys():
+				temp[arg] = ' '
 		allLeadership.append(temp)
 	return allLeadership
 
 def getCoaches(propertyJson):
 	allCoaches = []
+	neededArgs = ['Name', 'Position', 'From', 'To']
 	for item in propertyJson['values']:
 		temp = {}
 		if '/sports/sports_team_coach_tenure/coach' in item['property'].keys():
 			if item['property']['/sports/sports_team_coach_tenure/coach']['values']:
-				temp['name'] = item['property']['/sports/sports_team_coach_tenure/coach']['values'][0]['text']
+				temp['Name'] = item['property']['/sports/sports_team_coach_tenure/coach']['values'][0]['text']
 
 		if '/sports/sports_team_coach_tenure/position' in item['property'].keys():
 			if item['property']['/sports/sports_team_coach_tenure/position']['values']:
-				temp['position'] = item['property']['/sports/sports_team_coach_tenure/position']['values'][0]['text']
+				temp['Position'] = item['property']['/sports/sports_team_coach_tenure/position']['values'][0]['text']
 
 		if '/sports/sports_team_coach_tenure/from' in item['property'].keys():
 			if item['property']['/sports/sports_team_coach_tenure/from']['values']:
-				temp['from'] = item['property']['/sports/sports_team_coach_tenure/from']['values'][0]['text']		
+				temp['From'] = item['property']['/sports/sports_team_coach_tenure/from']['values'][0]['text']		
 
 		if '/sports/sports_team_coach_tenure/to' in item['property'].keys():
 			if item['property']['/sports/sports_team_coach_tenure/to']['values']:
-				temp['to'] = item['property']['/sports/sports_team_coach_tenure/to']['values'][0]['text']
+				temp['To'] = item['property']['/sports/sports_team_coach_tenure/to']['values'][0]['text']
 
-		if 'from' in temp.keys() and 'to' not in temp.keys():
-			temp['to'] = 'now'
-
+		if 'From' in temp.keys() and 'To' not in temp.keys():
+			temp['To'] = 'now'
+		for arg in neededArgs:
+			if arg not in temp.keys():
+				temp[arg] = ' '
 		allCoaches.append(temp)
 	return allCoaches
 
 def getRoster(propertyJson):
 	allRoster = []
+	neededArgs = ['Name', 'Position', 'Number', 'From', 'To']
 	for item in propertyJson['values']:
 		temp = {}
 		if '/sports/sports_team_roster/player' in item['property'].keys():
 			if item['property']['/sports/sports_team_roster/player']['values']:
-				temp['name'] = item['property']['/sports/sports_team_roster/player']['values'][0]['text']
+				temp['Name'] = item['property']['/sports/sports_team_roster/player']['values'][0]['text']
 
 		if '/sports/sports_team_roster/position' in item['property'].keys():
 			if item['property']['/sports/sports_team_roster/position']['values']:
-				temp['position'] = item['property']['/sports/sports_team_roster/position']['values'][0]['text']
+				temp['Position'] = item['property']['/sports/sports_team_roster/position']['values'][0]['text']
 		
 		if '/sports/sports_team_roster/number' in item['property'].keys():
 			if item['property']['/sports/sports_team_roster/number']['values']:
-				temp['number'] = item['property']['/sports/sports_team_roster/number']['values'][0]['text']
+				temp['Number'] = item['property']['/sports/sports_team_roster/number']['values'][0]['text']
 
 		if '/sports/sports_team_roster/from' in item['property'].keys():
 			if item['property']['/sports/sports_team_roster/from']['values']:
-				temp['from'] = item['property']['/sports/sports_team_roster/from']['values'][0]['text']		
+				temp['From'] = item['property']['/sports/sports_team_roster/from']['values'][0]['text']		
 
 		if '/sports/sports_team_roster/to' in item['property'].keys():
 			if item['property']['/sports/sports_team_roster/to']['values']:
-				temp['to'] = item['property']['/sports/sports_team_roster/to']['values'][0]['text']
+				temp['To'] = item['property']['/sports/sports_team_roster/to']['values'][0]['text']
 
-		if 'from' in temp.keys() and 'to' not in temp.keys():
-			temp['to'] = 'now'
+		if 'From' in temp.keys() and 'To' not in temp.keys():
+			temp['To'] = 'now'
+		for arg in neededArgs:
+			if arg not in temp.keys():
+				temp[arg] = ' '
 		allRoster.append(temp)
 	return allRoster
 
@@ -457,10 +578,6 @@ def interactiveInfoBox(api_key):
 		doStuff(query, api_key)
 
 if __name__ == "__main__":
-
-	print len(sys.argv)
-	for item in sys.argv:
-		print item
 
 	if len(sys.argv)!=2 and len(sys.argv)!=4: # Expect exactly one argument: the api_key
 		usage()
