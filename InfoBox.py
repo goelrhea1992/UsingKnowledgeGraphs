@@ -575,7 +575,7 @@ def interactiveInfoBox(apiKey):
 		match = re.search(pattern, query, re.IGNORECASE)
 		if match:
 			query = match.group(1)
-			helper.answerQuestion(query, apiKey)
+			helper.answerQuestion(query, apiKey, 2)
 		else:
 			doStuff(query, apiKey)
 
@@ -615,7 +615,7 @@ if __name__ == "__main__":
 				match = re.search(pattern, query, re.IGNORECASE)
 				if match:
 					query = match.group(1)
-					helper.answerQuestion(query, apiKey)
+					helper.answerQuestion(query, apiKey, 1)
 
 		elif sys.argv[3]=='-f':
 			f = open(queryFile)
@@ -630,7 +630,7 @@ if __name__ == "__main__":
 						match = re.search(pattern, query, re.IGNORECASE)
 						if match:
 							query = match.group(1)
-							helper.answerQuestion(query, apiKey)
+							helper.answerQuestion(query, apiKey, 1)
 				else:
 					sys.exit(2)
 
