@@ -13,9 +13,13 @@ from textwrap import TextWrapper
 import getopt
 import helper
 
+# to order results in the infobox
 priorityWords = ['Organization', 'Name', 'Character']
 
 def getPrintValue(value):
+	""" 
+	Returns UTF encoding of value
+	"""
 	if isinstance(value,basestring):
 		valuePrint = value.encode('utf8')
 	else:
@@ -23,6 +27,9 @@ def getPrintValue(value):
 	return valuePrint
 
 def drawInfoBox(info, allEntities):
+	"""
+	Draws the infobox using the dict info
+	"""
 	print
 	print
 	introString = info['Name']+' ('
@@ -42,6 +49,8 @@ def drawInfoBox(info, allEntities):
 	print wrapper.fill(introString)
 	print wrapper.fill('-'*(len(introString)))
 	print
+
+	# print all elements with single value
 	for key, value in info.iteritems():
 		valuePrint = getPrintValue(value)
 		valuePrint = valuePrint.decode('utf-8')
@@ -50,19 +59,25 @@ def drawInfoBox(info, allEntities):
 			print wrapper.fill(columnString+valuePrint)
 			print wrapper.fill('-'*(wrapper.width-2))
 
+	# print lists of string values
 	for key, value in info.iteritems():
 		valuePrint = getPrintValue(value)
 		valuePrint = valuePrint.decode('utf-8')
 		columnString = '{0:25}:  '.format(key)
 		if type(value)==list:
 			if all(isinstance(x,unicode) for x in value):
-				firstVal = value[0]
-				print wrapper.fill(columnString+firstVal)
-				wrapper.initial_indent = ' '*30
-				print wrapper.fill('\n'.join(value[1:]))
-				wrapper.initial_indent = ' '*2
+				first = True
+				for item in value:
+					if first:
+						print wrapper.fill(columnString+value[0])
+						first = False
+					else:
+						wrapper.initial_indent = ' '*30
+						print wrapper.fill(item)
+						wrapper.initial_indent = ' '*2
 				print wrapper.fill('-'*(wrapper.width-2))
 
+	# print Spouses
 	for key, value in info.iteritems():
 		valuePrint = getPrintValue(value)
 		valuePrint = valuePrint.decode('utf-8')
@@ -91,6 +106,7 @@ def drawInfoBox(info, allEntities):
 								wrapper.initial_indent = ' '*2
 					print wrapper.fill('-'*(wrapper.width-2))
 	
+	# print lists of dict items
 	for key, value in info.iteritems():
 		valuePrint = getPrintValue(value)
 		valuePrint = valuePrint.decode('utf-8')
@@ -148,6 +164,9 @@ def drawInfoBox(info, allEntities):
 	print
 
 def doStuff(query, apiKey):
+	"""
+	Interaction manager for helper functions for InfoBox Creation
+	"""
 	service_url = 'https://www.googleapis.com/freebase/v1/search'
 	params = {
 			'query': query,
@@ -184,6 +203,9 @@ def doStuff(query, apiKey):
 		drawInfoBox(info, allEntities)
 
 def getEntities(response):
+	"""
+	Returns a list of entities found in the given query response
+	"""
 	allProperites = response['property']
 	allEntities = []
 	for key in allProperites.keys():
@@ -203,27 +225,36 @@ def getEntities(response):
 	return list(set(allEntities))
 
 def getDOB(propertyJson):
+	""" Returns string value for DOB """
 	return propertyJson['values'][0]['text']
 
 def getPOB(propertyJson):
+	""" Returns string value for Place Of Birth """
 	return propertyJson['values'][0]['text']
 
 def getSlogan(propertyJson):
+	""" Returns string value for Slogan """
 	return propertyJson['values'][0]['text']
 
 def getOfficialWebsite(propertyJson):
+	""" Returns string value for Official Website"""
 	return propertyJson['values'][0]['text']
 
 def getSport(propertyJson):
+	""" Returns string value for Sport """
 	return propertyJson['values'][0]['text']
 
 def getArena(propertyJson):
+	""" Returns string value for Arena """
 	return propertyJson['values'][0]['text']
 
 def getFoundedYear(propertyJson):
+	""" Returns string value for Founded Year """
 	return propertyJson['values'][0]['text']
 
 def getSiblings(propertyJson):
+	""" Returns list of siblings """
+
 	allSiblings = []
 	for item in propertyJson['values']:
 		if '/people/sibling_relationship/sibling' in item['property'].keys():
@@ -232,6 +263,8 @@ def getSiblings(propertyJson):
 	return allSiblings
 
 def getSpouses(propertyJson):
+	""" Returns list of Spouses, where each spouse is a dict """
+
 	allSpouses = []
 	neededArgs = ['Name', 'From', 'To', 'Location']
 	for item in propertyJson['values']:
@@ -257,24 +290,28 @@ def getSpouses(propertyJson):
 	return allSpouses
 
 def getBooksAbout(propertyJson):
+	""" Returns list of all books about """
 	allBooksAbout = []
 	for item in propertyJson['values']:
 		allBooksAbout.append(item['text'])
 	return allBooksAbout
 
 def getBooksWritten(propertyJson):
+	""" Returns list of all books written """
 	allBooksWritten = []
 	for item in propertyJson['values']:
 		allBooksWritten.append(item['text'])
 	return allBooksWritten
 
 def getInfluenced(propertyJson):
+	""" Returns list of all influenced """
 	allInfluenced = []
 	for item in propertyJson['values']:
 		allInfluenced.append(item['text'])
 	return allInfluenced
 
 def getFilms(propertyJson):
+	""" Returns a list of films, where each film is a dict """
 	allFilms = []
 	neededArgs = ['Character', 'Film']
 	for item in propertyJson['values']:
@@ -292,6 +329,7 @@ def getFilms(propertyJson):
 	return allFilms
 
 def getLeagues(propertyJson):
+	""" Returns list of all leagues """
 	allLeagues = []
 	for item in propertyJson['values']:
 		temp = {}
@@ -301,6 +339,7 @@ def getLeagues(propertyJson):
 	return allLeagues
 
 def getTVSeries(propertyJson):
+	""" Returns list of all TV Series """
 	allTVSeries = []
 	neededArgs = ['Character', 'TV Series']
 	for item in propertyJson['values']:
@@ -318,6 +357,7 @@ def getTVSeries(propertyJson):
 	return allTVSeries
 
 def getBoardMember(propertyJson):
+	""" Returns a list of board memebers, where each board member is a dict """
 	allBoardMember = []
 	neededArgs = ['Organization', 'Role', 'Title', 'From', 'To']
 	for item in propertyJson['values']:
@@ -350,18 +390,21 @@ def getBoardMember(propertyJson):
 	return allBoardMember
 
 def getFounded(propertyJson):
+	""" Returns list of all founded """
 	allFounded = []
 	for item in propertyJson['values']:
 		allFounded.append(item['text'])
 	return allFounded
 
 def getLocation(propertyJson):
+	""" Returns list of all locations """
 	allLocations = []
 	for item in propertyJson['values']:
 		allLocations.append(item['text'])
 	return allLocations
 
 def getLeadership(propertyJson):
+	""" Returns list of all leadership, where each element is a dict """
 	allLeadership = []
 	neededArgs = ['Organization', 'Role', 'Title', 'From', 'To']
 	for item in propertyJson['values']:
@@ -394,6 +437,7 @@ def getLeadership(propertyJson):
 	return allLeadership
 
 def getCoaches(propertyJson):
+	""" Returns list of all coaches, where each coach is a dict """
 	allCoaches = []
 	neededArgs = ['Name', 'Position', 'From', 'To']
 	for item in propertyJson['values']:
@@ -423,6 +467,7 @@ def getCoaches(propertyJson):
 	return allCoaches
 
 def getRoster(propertyJson):
+	""" Returns list of all roster, where each roster is a dict """
 	allRoster = []
 	neededArgs = ['Name', 'Position', 'Number', 'From', 'To']
 	for item in propertyJson['values']:
@@ -456,12 +501,14 @@ def getRoster(propertyJson):
 	return allRoster
 
 def getChampionship(propertyJson):
+	""" Returns a list of all championships """
 	allChampionship = []
 	for item in propertyJson['values']:
 		allChampionship.append(item['text'])
 	return allChampionship
 
 def getTeams(propertyJson):
+	""" Returns a list of all teams """
 	allTeams = []
 	for item in propertyJson['values']:
 		if '/sports/sports_league_participation/team' in item['property'].keys():
@@ -470,6 +517,10 @@ def getTeams(propertyJson):
 	return allTeams
 
 def getInfo(entityFound, response, result, info):
+	"""
+	Populates/updates the dict info with all the information found in the given
+	response relevant to the entityFound
+	"""
 	allProperites = response['property']
 	if 'name' not in info.keys():
 		info['Name'] = allProperites['/type/object/name']['values'][0]['text']
@@ -549,9 +600,9 @@ def getInfo(entityFound, response, result, info):
 
 def usage():
 	print """ Usage:
-	python InfoBox.py [apiKey] -q [query] 
-	python InfoBox.py [apiKey] -f [file of queries]
-	python InfoBox.py [apiKey]
+	python InfoBox.py --key [apiKey] -q [query] -t [infobox/question]
+	python InfoBox.py --key [apiKey] -f [file of queries] -t [infobox/question]
+	python InfoBox.py --key [apiKey]
 
 	"""
 
@@ -559,6 +610,9 @@ def printHelp():
     print "HELP!"
 
 def interactiveInfoBox(apiKey):
+	"""
+	Executes infobox in the interactive mode
+	"""
 	print 'Welcome to infoxbox creator using Freebase knowledge graph.'
 	print 'Feel curious? Start exploring...'
 	print
@@ -569,6 +623,7 @@ def interactiveInfoBox(apiKey):
 		print '['+st+']',
 		query = raw_input(getpass.getuser()+'@fb_ibox> ')
 
+		# check if query is a question
 		pattern = 'Who created ([\w\s.-]+)\?*'
 		match = re.search(pattern, query, re.IGNORECASE)
 		if match:
@@ -579,7 +634,7 @@ def interactiveInfoBox(apiKey):
 
 if __name__ == "__main__":
 
-	if len(sys.argv)!=3 and len(sys.argv)!=7: # Expect exactly one argument: the apiKey
+	if len(sys.argv)!=3 and len(sys.argv)!=7: # Expect exactly two or six elements
 		usage()
 		sys.exit(2)	
 	else:
@@ -601,9 +656,10 @@ if __name__ == "__main__":
 			elif opt == "--key":
 				apiKey = arg
 
+		# interactive mode
 		if len(sys.argv)==3:
 			interactiveInfoBox(apiKey)
-
+		# single query
 		elif sys.argv[3]=='-q':
 			if task=='infobox':
 				doStuff(query, apiKey)
@@ -614,7 +670,7 @@ if __name__ == "__main__":
 				if match:
 					query = match.group(1)
 					helper.answerQuestion(query, apiKey, 1)
-
+		# query file
 		elif sys.argv[3]=='-f':
 			f = open(queryFile)
 			while f:
@@ -631,9 +687,3 @@ if __name__ == "__main__":
 							helper.answerQuestion(query, apiKey, 1)
 				else:
 					sys.exit(2)
-
-
-			
-
-	
-
