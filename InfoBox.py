@@ -685,5 +685,7 @@ if __name__ == "__main__":
 						if match:
 							query = match.group(1)
 							helper.answerQuestion(query, apiKey, 1)
+							print
+							print
 				else:
 					sys.exit(2)
