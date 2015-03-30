@@ -3,6 +3,18 @@ import pprint
 import urllib
 import io
 import sys
+import time
+import datetime
+import getpass
+
+
+def html_table(lol):
+	print '<table>'
+	for sublist in lol:
+		print '  <tr><td>'
+		print '    </td><td>'.join(sublist)
+		print '  </td></tr>'
+		print '</table>'
 
 def drawList(listData):
 	for item in listData:
@@ -27,11 +39,14 @@ def drawDict(dictData):
 
 def drawInfoBox(info, allEntities):
 	pprint.pprint(info)
-	# for key, value in info.iteritems():
-	# 	if type(value)!=list and type(value)!=dict:
-			
-	# 		print '|{0:25}\t{1:300}|\n'.format(key+':', value.expandtabs(25)),
-	# 		print '-'*170
+	for key, value in info.iteritems():
+		if isinstance(value,basestring):
+		    printThis = value.encode('utf8')
+		else:
+		    printThis = unicode(value).encode('utf8')
+
+		print '|{0:25}\t{1:80}|\n'.format(key+':', printThis),
+		print '-'*170
         
 
 	# 	if type(value)==list:
@@ -52,6 +67,7 @@ def doStuff(query, api_key):
 	url = service_url + '?' + urllib.urlencode(params)
 	response = json.loads(urllib.urlopen(url).read())
 	# pprint.pprint(response)
+	foundSomething = False
 	countMid = 0
 	for result in response['result']:
 		countMid = countMid + 1
@@ -64,12 +80,24 @@ def doStuff(query, api_key):
 		response2 = json.loads(urllib.urlopen(url2).read())
 		allEntities = getEntities(response2)
 		info = {}
-		for entityFound in allEntities:
-			getInfo(entityFound, response2, result, info)
+
+		if allEntities:
+			for entityFound in allEntities:
+				getInfo(entityFound, response2, result, info)
 
 		if info:
-			drawInfoBox(info, allEntities)
+			foundSomething = True
 			break
+		else:
+			if countMid%5==0:
+				print str(countMid)+' Search API result entries were considered. None of them of a supported type.'
+				if countMid==20:
+					print 'No related information about query ['+query+'] was found!'
+					break
+	
+	if foundSomething:
+		drawInfoBox(info, allEntities)
+	
 
 def getEntities(response):
 	allProperites = response['property']
@@ -411,21 +439,49 @@ def getInfo(entityFound, response, result, info):
 
 def usage():
 	print """ Usage:
-	python InfoBox.py ['query'] [optional API Key]
+	python InfoBox.py [API_Key] -q [query] 
+	python InfoBox.py [API_Key] -f [file of queries]
+	python InfoBox.py [API_Key]
 
 	"""
+def interactiveInfoBox(api_key):
+	print 'Welcome to infoxbox creator using Freebase knowledge graph.'
+	print 'Feel curious? Start exploring...'
+	print
+
+	while True:
+		ts = time.time()
+		st = datetime.datetime.fromtimestamp(ts).strftime('%H:%M:%S')
+		print '['+st+']',
+		query = raw_input(getpass.getuser()+'@fb_ibox> ')
+		doStuff(query, api_key)
 
 if __name__ == "__main__":
 
-	if len(sys.argv)!=2 and len(sys.argv)!=3: # Expect exactly one or two arguments: the query, and api_key (optional)
+	print len(sys.argv)
+	for item in sys.argv:
+		print item
+
+	if len(sys.argv)!=2 and len(sys.argv)!=4: # Expect exactly one argument: the api_key
 		usage()
 		sys.exit(2)	
 	else:
-		query = sys.argv[1]
-		if len(sys.argv)==3:
-			api_key =  sys.argv[2]
-		else:
-			api_key = 'AIzaSyDUcGzUl-GpF5IhwP3M7GZ_5ERBr-1NUIQ'
+		api_key =  sys.argv[1].strip('\'')
+		if len(sys.argv)==2:
+			interactiveInfoBox(api_key)
+		elif sys.argv[2]=='-q':
+			query = sys.argv[3].strip('\'')
+			doStuff(query, api_key)
+		elif sys.argv[2]=='-f':
+			f = open(sys.argv[3].strip('\''))
+			while f:
+				query = f.readline()
+				if query:
+					doStuff(query, api_key)
+				else:
+					sys.exit(2)
 
-	doStuff(query, api_key)
+			
+
+	
 
