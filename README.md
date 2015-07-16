@@ -40,12 +40,12 @@ Internal Design
 
   Type of Entity  |  Property of Interest  |  Freebase Property  
  --------------------------------------------------------------------------------------------------------------
-Person | Name | /type/object/name 
-       | Birthday | /people/person/date_of_birth
-       | Place of Birth | /people/person/place_of_birth
-       | Siblings | /people/person/sibling_s
-       | Spouses | /people/person/spouse_s 
-       | Description | /common/topic/description
+	| Person           | Name                          | /type/object/name 
+        |                  | Birthday                      | /people/person/date_of_birth
+        |                  | Place of Birth                | /people/person/place_of_birth
+        |                  | Siblings                      | /people/person/sibling_s
+        |                  | Spouses                       | /people/person/spouse_s 
+        |                  | Description                   | /common/topic/description
 --------------------------------------------------------------------------------------------------------------
 	| Author           | Books(Title)                  | /book/author/works_written                                |
 	|                  | Book About the Author(Title)  | /book/book_subject/works                                  |
@@ -93,17 +93,15 @@ Person | Name | /type/object/name
 	|                  |               (Number)         | /sports/sports_team_roster/number                        |
 	|                  |               (From)           | /sports/sports_team_roster/from                          |
 	|                  |               (To)             | /sports/sports_team_roster/to                            |
-	 --------------------------------------------------------------------------------------------------------------
+	 -------------------------------------------------------------------------------------------------------------
 
 - Part 2: Question Answering
-
+----------------------------------
 
 Freebase API Key
 ----------------
 AIzaSyDUcGzUl-GpF5IhwP3M7GZ_5ERBr-1NUIQ
 
-Requests per second per user
-----------------------------
 
 
 
