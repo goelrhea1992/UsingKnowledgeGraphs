@@ -40,22 +40,22 @@ Internal Design
 
   Type of Entity  |  Property of Interest  |  Freebase Property  
  --------------------------------------------------------------------------------------------------------------
-	| Person           | Name                          | /type/object/name 
-        |                  | Birthday                      | /people/person/date_of_birth
-        |                  | Place of Birth                | /people/person/place_of_birth
-        |                  | Siblings                      | /people/person/sibling_s
-        |                  | Spouses                       | /people/person/spouse_s 
-        |                  | Description                   | /common/topic/description
---------------------------------------------------------------------------------------------------------------
+	| Person           | Name                          | /type/object/name |
+        |                  | Birthday                      | /people/person/date_of_birth |
+        |                  | Place of Birth                | /people/person/place_of_birth |
+        |                  | Siblings                      | /people/person/sibling_s |
+        |                  | Spouses                       | /people/person/spouse_s |
+        |                  | Description                   | /common/topic/description |
+        --------------------------------------------------------------------------------------------------------------
 	| Author           | Books(Title)                  | /book/author/works_written                                |
 	|                  | Book About the Author(Title)  | /book/book_subject/works                                  |
 	|                  | Influenced                    | /influence/influence_node/influenced                      |
 	|                  | Influenced by                 |                                                           |
-	 --------------------------------------------------------------------------------------------------------------
+	 -------------------------------------------------------------------------------------------------------------
 	| Actor            | FilmsParticipated (Film)      | /film/performance/film                                    |
 	|                  |                   (Name)      | /type/object/name                                         |
 	|                  |                   (Character) | /film/performance/character                               |
-	 --------------------------------------------------------------------------------------------------------------
+	 -------------------------------------------------------------------------------------------------------------
 	| BusinessPerson   | Leadership  (From)             | /organization/leadership/from                            |
 	|                  |             (To)               | /organization/leadership/to                              | 
 	|                  |             (Organization)     | /organization/leadership/organization                    |
