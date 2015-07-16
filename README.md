@@ -1,7 +1,7 @@
 # UsingKnowledgeGraphs
 
-----------------------
 Akhil Lohchab (al3372)
+----------------------
 Rhea Goel     (rg2936)
 ----------------------
 
@@ -32,20 +32,21 @@ The complete program can be executed in one of the following ways:
 Internal Design
 ---------------
 - Part 1: Infobox Creation
+---------------------------
 	- All relevant entity types for the query are identified
 	- For each entity type, the corresponding properties of interest are extracted 
 	- Using the following mapping from Freebase properties to the entity properties of interest
 
-	 --------------------------------------------------------------------------------------------------------------
-	|  Type of Entity  |     Property of Interest      |                      Freebase Property                    |
-	 --------------------------------------------------------------------------------------------------------------
-	| Person           | Name                          | /type/object/name                                         |
-	|                  | Birthday                      | /people/person/date_of_birth                              |
-	|                  | Place of Birth                | /people/person/place_of_birth                             |
-	|                  | Siblings                      | /people/person/sibling_s                                  |
-	|                  | Spouses                       | /people/person/spouse_s                                   |
-	|                  | Description                   | /common/topic/description                                 |
-	 --------------------------------------------------------------------------------------------------------------
+
+  Type of Entity  |  Property of Interest  |  Freebase Property  
+ --------------------------------------------------------------------------------------------------------------
+Person | Name | /type/object/name 
+       | Birthday | /people/person/date_of_birth
+       | Place of Birth | /people/person/place_of_birth
+       | Siblings | /people/person/sibling_s
+       | Spouses | /people/person/spouse_s 
+       | Description | /common/topic/description
+--------------------------------------------------------------------------------------------------------------
 	| Author           | Books(Title)                  | /book/author/works_written                                |
 	|                  | Book About the Author(Title)  | /book/book_subject/works                                  |
 	|                  | Influenced                    | /influence/influence_node/influenced                      |
