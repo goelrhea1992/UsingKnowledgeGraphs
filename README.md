@@ -97,6 +97,37 @@ Internal Design
 
 - Part 2: Question Answering
 ----------------------------------
+This section answers questions of the form of 'Who created X?' where X could either be the name of a book or an organization (as specified in the problem statement). The author/founder of the subject in question was obtained by using the Freebase MQL read API where the following specific fields were used:
+
+/organization/organization_founder/organization_founded for type BusinessPerson
+/book/author/works_written for type Author
+
+The output is then sorted alphabetically on the name of author/businessperson.
+
+The main function responsible for this section is answerQuestion() in the helper class which can in two separate 
+modes - one for standalone queries and one for the interactive mode which produces the results in a box just like the reference implementation.
+
+Transcripts:
+--------------
+The transcripts are located in the following folders and include the corresponding files:
+
+Part1_transcripts:
+- billGates		: for ‘Bill Gates’
+- RobertDowneyJr	: for ‘Robert Downey Jr.’
+- Jackson		: for ‘Jackson’
+- NFL			: for ‘NFL’
+- NBA			: for ’NBA’
+- NYKnicks		: for ‘NY Knicks’
+- MiamiHeat		: for ‘MiamiHeat’
+
+
+Part2_transcripts:
+- Google.txt         : for 'Who Created Google'
+- LoTR.txt           : for 'Who Created Lord of The Rings'
+- Microsoft.rtf      : for 'Who Created Microsoft'
+- romeoAndJuliet.txt : for 'Who Created Romeo And Juliet'
+- box.txt            : for results of the above 4 questions in a box format.
+
 
 Freebase API Key
 ----------------
